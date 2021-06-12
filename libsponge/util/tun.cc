@@ -1,6 +1,8 @@
 #include "tun.hh"
-
 #include "util.hh"
+
+#include<sys/types.h>
+#include<sys/socket.h>
 
 #include <cstring>
 #include <fcntl.h>
