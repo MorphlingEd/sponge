@@ -12,12 +12,6 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity)
-{
-    _capacity = capacity;
-    str.resize(capacity);
-}
-
 size_t ByteStream::write(const string &data)
 {
     size_t bytesWritten = min(remaining_capacity(), data.size());
@@ -28,6 +22,9 @@ size_t ByteStream::write(const string &data)
         copy(data.begin(), data.begin() + (_capacity - writePtr), str.begin() + writePtr);
         copy(data.begin() + (_capacity - writePtr), data.begin() + (bytesWritten - _capacity + writePtr), str.begin());
     }
+
+    writePtr += bytesWritten;
+    write_count += bytesWritten;
     return bytesWritten;
 }
 
@@ -39,9 +36,9 @@ string ByteStream::peek_output(const size_t len) const
     string res;
 
     if (term > readPtr)
-        res = str.substr(readPtr, term);
+        res = str.substr(readPtr, bytesRead);
     else
-        res = str.substr(readPtr, _capacity - 1) + str.substr(0, term);
+        res = str.substr(readPtr, _capacity - readPtr) + str.substr(0, bytesRead - _capacity + readPtr);
 
     return res;
 }
@@ -49,7 +46,10 @@ string ByteStream::peek_output(const size_t len) const
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len)
 {
-    readPtr = (readPtr + min(len, write_count - read_count)) % _capacity;
+    size_t bytesRead = min(len, write_count - read_count);
+    readPtr = (readPtr + bytesRead) % _capacity;
+    read_count += bytesRead;
+    if (read_count == write_count && _ended) _eof = true;
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
@@ -57,19 +57,23 @@ void ByteStream::pop_output(const size_t len)
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
 
-    size_t bytesRead = min(len, write_count - read_count);
     string res = peek_output(len);
 
     pop_output(len);
-    read_count += bytesRead;
-    if (read_count == write_count && _ended) _eof = true;
 
     return res;
 }
 
-void ByteStream::end_input() { _ended = true; }
+void ByteStream::end_input()
+{
+    _ended = true;
+    if (buffer_empty()) _eof = true;
+}
 
-bool ByteStream::input_ended() const { return _ended; }
+bool ByteStream::input_ended() const
+{
+    return _ended;
+}
 
 size_t ByteStream::buffer_size() const { return write_count - read_count; }
 
