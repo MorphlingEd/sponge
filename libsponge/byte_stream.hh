@@ -22,7 +22,7 @@ class ByteStream {
     size_t readPtr  = 0;
     size_t write_count = 0;
     size_t read_count = 0;
-    size_t capacity;
+    size_t _capacity;
     string str;
 
     bool _ended{false};
@@ -30,7 +30,7 @@ class ByteStream {
     bool _error{false};  //!< Flag indicating that the stream suffered an error.
 
   public:
-    //! Construct a stream with room for `capacity` bytes.
+    //! Construct a stream with room for `_capacity` bytes.
     ByteStream(const size_t capacity);
 
     //! \name "Input" interface for the writer

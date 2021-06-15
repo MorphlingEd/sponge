@@ -14,19 +14,19 @@ using namespace std;
 
 ByteStream::ByteStream(const size_t capacity)
 {
-    this->capacity = capacity;
+    _capacity = capacity;
     str.resize(capacity);
 }
 
 size_t ByteStream::write(const string &data)
 {
     size_t bytesWritten = min(remaining_capacity(), data.size());
-    if (writePtr + bytesWritten - 1 < capacity)
+    if (writePtr + bytesWritten - 1 < _capacity)
         copy(data.begin(), data.begin() + bytesWritten, str.begin() + writePtr);
     else
     {
-        copy(data.begin(), data.begin() + (capacity - writePtr), str.begin() + writePtr);
-        copy(data.begin() + (capacity - writePtr), data.begin() + (bytesWritten - capacity + writePtr), str.begin());
+        copy(data.begin(), data.begin() + (_capacity - writePtr), str.begin() + writePtr);
+        copy(data.begin() + (_capacity - writePtr), data.begin() + (bytesWritten - _capacity + writePtr), str.begin());
     }
     return bytesWritten;
 }
@@ -35,13 +35,13 @@ size_t ByteStream::write(const string &data)
 string ByteStream::peek_output(const size_t len) const
 {
     size_t bytesRead = min(len, write_count - read_count);
-    size_t term = (readPtr + bytesRead) % capacity;
+    size_t term = (readPtr + bytesRead) % _capacity;
     string res;
 
     if (term > readPtr)
         res = str.substr(readPtr, term);
     else
-        res = str.substr(readPtr, capacity - 1) + str.substr(0, term);
+        res = str.substr(readPtr, _capacity - 1) + str.substr(0, term);
 
     return res;
 }
@@ -49,7 +49,7 @@ string ByteStream::peek_output(const size_t len) const
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len)
 {
-    readPtr = (readPtr + min(len, write_count - read_count)) % capacity;
+    readPtr = (readPtr + min(len, write_count - read_count)) % _capacity;
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
@@ -89,5 +89,5 @@ size_t ByteStream::bytes_read() const
 
 size_t ByteStream::remaining_capacity() const
 {
-    return (capacity - write_count + read_count);
+    return (_capacity - write_count + read_count);
 }
